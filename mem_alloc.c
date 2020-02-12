@@ -102,7 +102,7 @@ void mem_free (void *addr)
     add_to_freelist(n);                         //b.
 }
 void *mem_realloc (void *addr, size_t size)
-{   if(!addr)   return mem_malloc(size);            //a.
+{   if(!addr)   return mem_malloc(size);        //a.
     if(!size)   return mem_free(addr), NULL;    //b.
     Sfb *n=_fb(addr,-OVH);  size_t nsz=n->sz & ~1;
     Sfb *q=_fb(n,nsz+OVH*2);size_t netto=_nettosize(size);
