@@ -117,7 +117,7 @@ void *mem_realloc (void *addr, size_t size)
             add_to_freelist(p);
         }   return addr;
     }                                           //d. groter blok nodig:
-    size_t psz=_fb(n,-OVH)->sz;                 if(psz&1) psz=0;//(niet-vrij)
+    size_t psz=_fb(n,-OVH)->sz; if(psz&1) psz=0;//(niet-vrij)
     if(!(q->sz&1) )                             //  vrije opvolger
     {   if(netto<=nsz+q->sz+OVH*2)
         {   get_from_freelist(q);   merge(n,q,1);
