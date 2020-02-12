@@ -52,9 +52,12 @@ Interface-beschrijving:
     f. Anders wordt NULL teruggegeven.
 
 Wijzigingen:
+    RvL 12 feb 2020 github-commit, #ifndef ... #endif toegevoegd
     RvL 11 feb 2020 aanmaak
    -------------------------------------------------------------------------
 */
+#ifndef _MEM_ALLOC_H_INCLUDED_
+#define _MEM_ALLOC_H_INCLUDED_
 #include <stddef.h>         //offsetof, size_t
 
     //algemene macro's:
@@ -70,3 +73,5 @@ void *mem_malloc(size_t totalsize);
 void *mem_calloc(size_t nitems, size_t itemsize);
 void mem_free(void *addr);
 void *mem_realloc(void *addr, size_t size);
+
+#endif//_MEM_ALLOC_H_INCLUDED_

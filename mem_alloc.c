@@ -4,6 +4,7 @@
     Memory-allocator, idee: https://web.ics.purdue.edu/~cs354/labs/lab6/
 
 Wijzigingen:
+    RvL 12 feb 2020 github-commit, #undef ... toegevoegd
     RvL 11 feb 2020 aanmaak
    -------------------------------------------------------------------------
 */
@@ -136,3 +137,7 @@ ap: {   Sfb *p=_fb(n,-psz-OVH*2);
         return mem_free(addr), vp;
     }   return NULL;                            //f.
 }
+
+#undef _nettosize
+#undef _fb
+#undef _ao
