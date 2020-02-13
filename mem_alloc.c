@@ -4,6 +4,7 @@
     Memory-allocator, idee: https://web.ics.purdue.edu/~cs354/labs/lab6/
 
 Wijzigingen:
+	RvL 13 feb 2020 mem_calloc(): 0-init, mem_realloc(): memcpy => mem_cpy()
     RvL 12 feb 2020 github-commit, #undef ... toegevoegd
     RvL 11 feb 2020 aanmaak
    -------------------------------------------------------------------------
@@ -64,7 +65,10 @@ static Sfb *split (Sfb *n, size_t nss)          //nss: netto splitted size
 }
 static size_t const MEM = _nettosize(1L<<12);   //4kB
 static size_t mem[MEM/sizeof(size_t)];
-
+static void mem_cpy (size_t *dst, const size_t *src, size_t sz)
+{   sz = dst==src ? 0 : (sz+sizeof(size_t)-1)/sizeof(size_t);
+    while(sz--) *dst++=*src++;
+}
     /* ---------------------------------------------------------
     public
     --------------------------------------------------------- */
@@ -88,9 +92,9 @@ void *mem_malloc (size_t size)
 }/* bv: mem_malloc(100) na mem_init als bovenstaand:
     4:105 ... 112:105 116:3968 120:NULL 124:NULL ... 4088:3968  */
 void *mem_calloc (size_t nitems, size_t size)
-{   void *p=mem_malloc(nitems*size);
-    if(p)   memset(p,0,nitems*size);
-    return p;
+{   void *p=mem_malloc(nitems*size);    
+    if(p) { size_t *sp=_ao(p,nitems*size);  while(--sp>_ao(p,0) ) *sp=0;
+    }   return p;
 }
 void mem_free (void *addr)
 {   if(!(_ao(addr,-OVH)&1) )    return;
@@ -129,11 +133,11 @@ void *mem_realloc (void *addr, size_t size)
     } else if(netto<=psz+OVH*2+nsz)             //  vrije voorganger
 ap: {   Sfb *p=_fb(n,-psz-OVH*2);
         get_from_freelist(p);   merge(p,n,1);
-        memcpy(_ao(p,OVH), addr, nsz);
+        mem_cpy(_ao(p,OVH), addr, nsz);
         return _ao(p,OVH);
     }
     if(void *vp=mem_malloc(size) )              //e.
-    {   memcpy(vp, addr, nsz);
+    {   mem_cpy(vp, addr, nsz);
         return mem_free(addr), vp;
     }   return NULL;                            //f.
 }
