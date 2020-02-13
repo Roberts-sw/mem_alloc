@@ -3,7 +3,7 @@ English:  bss-based memory-allocator for microcontroller, single-threaded
 
 features: coalescence, private functions for freelist-control, block merge/-split
 
-Comments in code are written in Dutch language
+Code comments are written in Dutch language
 
 interface:
 
