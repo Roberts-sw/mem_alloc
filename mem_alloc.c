@@ -24,9 +24,9 @@ struct st_fb {union{size_t sz;Sfb *d;}; Sfb *next, *prev;};
 static Sfb *freelist[32+1]; //index 0..31: blokken van SZ*index Bytes
                             //index 32: groter, op grootte oplopend gesorteerd
 #define _freelist_index(sz)\
-	((sz)/SZ>_maxindex(freelist)?_maxindex(freelist):(sz)/SZ)
+    ((sz)/SZ>_maxindex(freelist)?_maxindex(freelist):(sz)/SZ)
 static void add_to_freelist (Sfb *n)
-{   size_t sz=n->sz; int i=_freelist_index(sz);	Sfb *p=NULL, *q;
+{   size_t sz=n->sz; int i=_freelist_index(sz); Sfb *p=NULL, *q;
     if(q=freelist[i])                           //is er al een freelist[i]
     {   if(_maxindex(freelist)==i)              //? en zijn het grote blokken
             while(sz>q->sz)                     //  ? zoek grootte-opvolger q
@@ -40,14 +40,14 @@ static Sfb *find_in_freelist (size_t sz)
 {   sz=_nettosize(sz);
     Sfb *n, **p=freelist+_freelist_index(sz)-1, **q=(freelist)+_maxindex(freelist);
     while(++p<q) if(*p) return *p;
-    if(*q) for(n=*q; n&&sz>n->sz; ) n=n->next; 	return n;
+    if(*q) for(n=*q; n&&sz>n->sz; ) n=n->next;  return n;
     return NULL;
 }
 void get_from_freelist (Sfb *n)
-{	Sfb *p=n->prev, *q=n->next;
-	if(!p)	freelist[_freelist_index(n->sz)]=q;
-	else	p->next=q;
-    if(q)	q->prev=p;
+{   Sfb *p=n->prev, *q=n->next;
+    if(!p)  freelist[_freelist_index(n->sz)]=q;
+    else    p->next=q;
+    if(q)   q->prev=p;
     n->next=n->prev=NULL;
 }
 
@@ -99,7 +99,7 @@ void *mem_calloc (size_t nitems, size_t size)
 }
 void mem_free (void *addr)
 {   Sfb *p, *q, *n=_fb(addr,-AA);  size_t sz;
-	if(!(n->sz&1) )    return;
+    if(!(n->sz&1) )    return;
     merge(n,NULL,0);                            //a.
     if(p=_fb(n,-AA), sz=p->sz,     !(sz&1) )    //  vrije voorbuur
     {   get_from_freelist(p); merge(p,n,0);n=p; }
@@ -118,15 +118,15 @@ void *mem_realloc (void *addr, size_t size)
             get_from_freelist(q); merge(p,q,0);
             add_to_freelist(p);
         } else if(nsz>AA*2+netto)               //  vrij restblok
-        	goto spl;
+            goto spl;
         return addr;
     }                                           //d. groter blok nodig:
     psz=_fb(n,-AA)->sz; if(psz&1) psz=0; //(niet-vrij)
     if(!(q->sz&1) )                             //  vrije opvolger
     {   if(netto<=nsz+q->sz+AA*2)
-        {   get_from_freelist(q);   merge(n,q,1);	nsz=n->sz & ~1;
-        	if(nsz>AA*2+netto)
-        		goto spl;
+        {   get_from_freelist(q);   merge(n,q,1);   nsz=n->sz & ~1;
+            if(nsz>AA*2+netto)
+                goto spl;
             return addr;
         } else if(netto<=psz+AA*2+nsz+q->sz+AA*2)//icm. vrije voorganger:
         {   get_from_freelist(q);   merge(n,q,0);//     eerst achterkant doen
@@ -137,8 +137,8 @@ ap: {   p=_fb(n,-psz-AA*2);
         get_from_freelist(p);   merge(p,n,1);
         mem_cpy(_ao(p,AA), addr, nsz); n=p;nsz=n->sz&~1;
         if(nsz>AA*2+netto)
-spl:	{	q=split(n,nsz-AA*2-netto);
-        	add_to_freelist(q);
+spl:    {   q=split(n,nsz-AA*2-netto);
+            add_to_freelist(q);
         }
         merge(n,NULL,1);
         return _ao(n,AA);
