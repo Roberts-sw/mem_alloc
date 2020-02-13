@@ -4,7 +4,7 @@
     Memory-allocator, idee: https://web.ics.purdue.edu/~cs354/labs/lab6/
 
 Wijzigingen:
-	RvL 13 feb 2020 mem_calloc(): 0-init, mem_realloc(): memcpy => mem_cpy()
+    RvL 13 feb 2020 mem_calloc(): 0-init, mem_realloc(): memcpy => mem_cpy()
     RvL 12 feb 2020 github-commit, #undef ... toegevoegd
     RvL 11 feb 2020 aanmaak
    -------------------------------------------------------------------------
