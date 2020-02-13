@@ -148,7 +148,6 @@ spl:	{	q=split(n,nsz-AA*2-netto);
         return mem_free(addr), p;
     }   return NULL;                            //f.
 }
-//const size_t cSZ =SZ;
 #undef MEM
 #undef _freelist_index
 #undef _nettosize
