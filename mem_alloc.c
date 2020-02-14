@@ -4,7 +4,7 @@
     Memory-allocator, idee: https://web.ics.purdue.edu/~cs354/labs/lab6/
 
 Wijzigingen:
-    RvL 13 feb 2020 test, diverse aanpassingen
+    RvL 14 feb 2020 test, diverse aanpassingen
     RvL 12 feb 2020 github-commit, #undef ... toegevoegd
     RvL 11 feb 2020 aanmaak
    -------------------------------------------------------------------------
@@ -52,16 +52,17 @@ void get_from_freelist (Sfb *n)
 }
 
 static void merge (Sfb *n, Sfb *q, int allocate)
-{   size_t nsz=(!q?0:AA*2+q->sz&~1)+n->sz&~1;   //nsz => netto size
-    n->sz=*_ao(n+1,nsz)=nsz | !!allocate;       //beschrijf hekken
+{   size_t nsz=n->sz&~1;
+    if(q)
+    {   size_t qsz=q->sz+AA*2&~1;               //(q toegewezen ipv n!)
+        *_ao(n,nsz+AA)=q->sz=0;     nsz+=qsz;   //haal tussenhekken weg
+    }   n->sz=*_ao(n,nsz+AA)=nsz | !!allocate;  //beschrijf hekken
 }
-static Sfb *split (Sfb *n, size_t nss)          //nss: netto splitted size
-{   if(nss+AA*2<=(n->sz&~1) )
-    {   size_t sz=(n->sz&~1)-(nss+AA*2);
-        n->sz=*_ao(n,sz+AA)=sz;
-        n=_fb(n,sz+AA*2);                       //voorkant ingekort, n erachter
-        n->sz=*_ao(n,nss+AA)=nss;
-        return n;                               //achterkant gemaakt
+static Sfb *split (Sfb *n, size_t nss)          //nss: n-splitted size
+{    if(nss+AA*2<(n->sz&~1) )
+    {   size_t qsz=(n->sz&~1)-(nss+AA*2);
+        n->sz=*_ao(n,nss+AA)=nss;   n=_fb(n,nss+AA*2);
+        n->sz=*_ao(n,qsz+AA)=qsz;   return n;
     }   return NULL;
 }
 #define MEM _nettosize(1L<<12)  //4kB
@@ -83,8 +84,8 @@ void *mem_malloc (size_t size)
     {   Sfb *n, *q;
         if( n=find_in_freelist(size) )          //a.
         {   get_from_freelist(n);               //b.
-            if(n->sz>AA*2+_nettosize(size) )    //c.
-                if(q=split(n,n->sz-AA*2-_nettosize(size)) )
+            if(n->sz>_nettosize(size)+AA*2 )
+                if(q=split(n,_nettosize(size) ) )   //c.
                     add_to_freelist(q);
             merge(n,NULL,1);                    //d.
             return _ao(n,AA);
@@ -101,8 +102,8 @@ void mem_free (void *addr)
 {   Sfb *p, *q, *n=_fb(addr,-AA);  size_t sz;
     if(!(n->sz&1) )    return;
     merge(n,NULL,0);                            //a.
-    if(p=_fb(n,-AA), sz=p->sz,     !(sz&1) )    //  vrije voorbuur
-    {   get_from_freelist(p); merge(p,n,0);n=p; }
+    if(sz=_fb(n,-AA)->sz+AA*2,  !(sz&1) )   //  vrije voorbuur
+    {   get_from_freelist(p=_fb(n,-sz) ); merge(p,n,0);n=p; }
     if(sz=n->sz, q=_fb(n,sz+AA*2), !(q->sz&1) ) //  vrije achterbuur
     {   get_from_freelist(q); merge(n,q,0);     }
     add_to_freelist(n);                         //b.
@@ -110,34 +111,35 @@ void mem_free (void *addr)
 void *mem_realloc (void *addr, size_t size)
 {   if(!addr)   return mem_malloc(size);        //a.
     if(!size)   return mem_free(addr), NULL;    //b.
-    Sfb *p, *n=_fb(addr,-AA);   size_t psz, nsz=n->sz & ~1;
+    Sfb *p, *n=_fb(addr,-AA);   size_t bpsz, nsz=n->sz & ~1;
     Sfb *q=_fb(n,nsz+AA*2);size_t netto=_nettosize(size);
-    if(nsz>=AA*2+netto)                         //c.
+    size_t bruto=_nettosize(size)+2*AA;         //2 beschermingshekken
+    if(nsz>=bruto)                              //c.
     {   if(!(q->sz&1) )                         //  vrije opvolger
-        {   p=split(n,nsz-AA*2-netto);
+        {   p=split(n,netto);
             get_from_freelist(q); merge(p,q,0);
             add_to_freelist(p);
-        } else if(nsz>AA*2+netto)               //  vrij restblok
+        } else if(nsz>bruto)                    //  vrij restblok
             goto spl;
         return addr;
     }                                           //d. groter blok nodig:
-    psz=_fb(n,-AA)->sz; if(psz&1) psz=0; //(niet-vrij)
+    bpsz=_fb(n,-AA)->sz+AA*2; if(bpsz&1) bpsz=0;//(niet-vrij)
     if(!(q->sz&1) )                             //  vrije opvolger
     {   if(netto<=nsz+q->sz+AA*2)
         {   get_from_freelist(q);   merge(n,q,1);   nsz=n->sz & ~1;
-            if(nsz>AA*2+netto)
+            if(nsz>bruto)
                 goto spl;
             return addr;
-        } else if(netto<=psz+AA*2+nsz+q->sz+AA*2)//icm. vrije voorganger:
+        } else if(netto<=bpsz+nsz+q->sz+AA*2)//icm. vrije voorganger:
         {   get_from_freelist(q);   merge(n,q,0);//     eerst achterkant doen
             goto ap;
         }
-    } else if(netto<=psz+AA*2+nsz)              //  vrije voorganger
-ap: {   p=_fb(n,-psz-AA*2);
+    } else if(netto<=bpsz+nsz)                  //  vrije voorganger
+ap: {   p=_fb(n,-bpsz);
         get_from_freelist(p);   merge(p,n,1);
         mem_cpy(_ao(p,AA), addr, nsz); n=p;nsz=n->sz&~1;
-        if(nsz>AA*2+netto)
-spl:    {   q=split(n,nsz-AA*2-netto);
+        if(nsz>bruto)
+spl:    {   q=split(n,netto);
             add_to_freelist(q);
         }
         merge(n,NULL,1);
