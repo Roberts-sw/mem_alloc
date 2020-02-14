@@ -85,7 +85,7 @@ void *mem_malloc (size_t size)
         if( n=find_in_freelist(size) )          //a.
         {   get_from_freelist(n);               //b.
             if(n->sz>_nettosize(size)+AA*2 )
-                if(q=split(n,_nettosize(size) ) )   //c.
+                if(q=split(n,_nettosize(size) ) )//c.
                     add_to_freelist(q);
             merge(n,NULL,1);                    //d.
             return _ao(n,AA);
@@ -102,7 +102,7 @@ void mem_free (void *addr)
 {   Sfb *p, *q, *n=_fb(addr,-AA);  size_t sz;
     if(!(n->sz&1) )    return;
     merge(n,NULL,0);                            //a.
-    if(sz=_fb(n,-AA)->sz+AA*2,  !(sz&1) )   //  vrije voorbuur
+    if(sz=_fb(n,-AA)->sz+AA*2,  !(sz&1) )       //  vrije voorbuur
     {   get_from_freelist(p=_fb(n,-sz) ); merge(p,n,0);n=p; }
     if(sz=n->sz, q=_fb(n,sz+AA*2), !(q->sz&1) ) //  vrije achterbuur
     {   get_from_freelist(q); merge(n,q,0);     }
@@ -130,7 +130,7 @@ void *mem_realloc (void *addr, size_t size)
             if(nsz>bruto)
                 goto spl;
             return addr;
-        } else if(netto<=bpsz+nsz+q->sz+AA*2)//icm. vrije voorganger:
+        } else if(netto<=bpsz+nsz+q->sz+AA*2)   //icm. vrije voorganger:
         {   get_from_freelist(q);   merge(n,q,0);//     eerst achterkant doen
             goto ap;
         }
