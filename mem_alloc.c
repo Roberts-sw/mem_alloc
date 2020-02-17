@@ -4,6 +4,7 @@
     Memory-allocator, idee: https://web.ics.purdue.edu/~cs354/labs/lab6/
 
 Wijzigingen:
+	Rvl 17 feb 2020 + mem_size()
     RvL 14 feb 2020 test, diverse aanpassingen
     RvL 12 feb 2020 github-commit, #undef ... toegevoegd
     RvL 11 feb 2020 aanmaak
@@ -149,6 +150,10 @@ spl:    {   q=split(n,netto);
     {   mem_cpy((size_t *)p, addr, nsz);
         return mem_free(addr), p;
     }   return NULL;                            //f.
+}
+size_t mem_size (void *addr)
+{	Sfb *n=_fb(addr,-AA);	size_t sz=n->sz&~1;
+	return n->sz&1 && n->sz==_fb(n,sz+AA)->sz ? sz : 0;
 }
 #undef MEM
 #undef _freelist_index

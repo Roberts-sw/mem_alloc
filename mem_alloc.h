@@ -52,6 +52,7 @@ Interface-beschrijving:
     f. Anders wordt NULL teruggegeven.
 
 Wijzigingen:
+	RvL 17 feb 2020 + mem_size()
     RvL 12 feb 2020 github-commit, #ifndef ... #endif toegevoegd
     RvL 11 feb 2020 aanmaak
    -------------------------------------------------------------------------
@@ -73,5 +74,6 @@ void *mem_malloc(size_t totalsize);
 void *mem_calloc(size_t nitems, size_t itemsize);
 void mem_free(void *addr);
 void *mem_realloc(void *addr, size_t size);
+size_t mem_size(void *addr);
 
 #endif//_MEM_ALLOC_H_INCLUDED_
